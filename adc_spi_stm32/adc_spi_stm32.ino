@@ -14,18 +14,20 @@ DHT dht(DHTPIN, DHTTYPE);     // Инициализация сенсора DHT
 float value_humidity = 0; //значение влажности
 float value_temp = 0; //значение температуры
 unsigned short output_value [5]; //массив со значениями АЦП
-uint8_t count = 0;
 
 ISR(SPI_STC_vect) 
 {
 unsigned char br = SPDR; //SPDR - принятый по SPI байт
+(void) SPDR;
 Serial.println (br);
 if (br == 0xCA)
   {
     SPI.transfer (0xAB);
   }
   else
+  {
     SPI.transfer (0x55);
+  } 
 }
 
 void setup() {
@@ -34,8 +36,8 @@ void setup() {
   Serial.println("Reading From the Sensor ...");
   
  // digitalWrite(SS, HIGH);
-  SPI.begin(); //  Инициализируем SPI при SS в режиме INPUT (получаем slave режим) и вручную выставляем правильные направления пинов
-  SPI.beginTransaction (SPISettings(6000000, MSBFIRST, SPI_MODE0)); //12 МГц, передача данных идёт, начиная с MSB, CPOL=0, CPHA=0
+  SPI.begin(); //  Инициализируем SPI при SS в режиме INPUT (slave режим) и вручную выставляем направления пинов
+  SPI.beginTransaction (SPISettings (6000000, MSBFIRST, SPI_MODE0)); //6 МГц, передача данных идёт, начиная с MSB, CPOL=0, CPHA=0
   pinMode(MISO, OUTPUT);
   pinMode(MOSI, INPUT);
   pinMode(SCK, INPUT);
@@ -51,8 +53,7 @@ void loop() {
 value_humidity = dht.readHumidity();    // cчитывание влажности
 value_temp = dht.readTemperature();     // cчитывание температуры
 
-// проверка NaN (вывод цифровых значений) 
-if (isnan(value_humidity) || isnan(value_temp)) 
+if (isnan(value_humidity) || isnan(value_temp)) // проверка NaN (вывод цифровых значений) 
   {
   Serial.println("Data error!");
   }
@@ -64,12 +65,6 @@ else
   Serial.print ("Temperature: ");
   Serial.print (value_temp);
   Serial.println (" *C");
-
-/*  SPI.beginTransaction (SPISettings(6000000, MSBFIRST, SPI_MODE0)); //6 МГц, передача данных идёт, начиная с MSB, CPOL=0, CPHA=0
-  digitalWrite(SS, LOW);
-  SPI.transfer(0xAB);
-  digitalWrite(SS, HIGH);
-  SPI.endTransaction();*/
   }
-  delay(1500);
+  delay(2000);
 }
