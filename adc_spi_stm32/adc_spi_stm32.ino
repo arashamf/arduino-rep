@@ -1,3 +1,4 @@
+//ардуина опрашивает датчик DHT22 и предаёт в режиме слейва данные температуры и влажности
 #include <SPI.h>
 #include <DHT.h>
 
@@ -14,19 +15,22 @@ DHT dht(DHTPIN, DHTTYPE);     // Инициализация сенсора DHT
 float value_humidity = 0; //значение влажности
 float value_temp = 0; //значение температуры
 unsigned short output_value [5]; //массив со значениями АЦП
+uint8_t raw_hum [4]; uint8_t raw_temp [4]; //4х байтные массивы для хранения данных типа float побайтно
 
 ISR(SPI_STC_vect) 
 {
 unsigned char br = SPDR; //SPDR - принятый по SPI байт
 (void) SPDR;
 Serial.println (br);
-if (br == 0xCA)
+if (br == 0x1A) //если получена команда от мастера с кодом 0x1A
   {
-    SPI.transfer (0xAB);
+    for (uint8_t count = 0; count < 4; count++) { //отправим массив с полученной от датчика значением температуры
+      SPI.transfer (raw_temp[count]);
+    }
   }
   else
   {
-    SPI.transfer (0x55);
+    SPI.transfer (0x1B);
   } 
 }
 
@@ -62,9 +66,25 @@ else
   Serial.print ("Humidity: ");
   Serial.print (value_humidity);
   Serial.print ("%\t");
+  
   Serial.print ("Temperature: ");
   Serial.print (value_temp);
-  Serial.println (" *C");
+  Serial.println (" *C");     
+/*разделим значение типа float на байты и запишем в массив*/                  
+  (float&) raw_hum = value_humidity; 
+  for (uint8_t count = 0; count < 4; count++)
+  {
+  Serial.print (raw_hum[count]);
   }
-  delay(2000);
+  Serial.println ();
+  
+  (float&) raw_temp = value_temp;
+  for (uint8_t count = 0; count < 4; count++)
+  {
+    Serial.print (raw_temp[count]);
+  }
+  Serial.println ();
+  
+  }
+  delay(2500);
 }
